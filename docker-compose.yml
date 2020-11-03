@@ -1,0 +1,45 @@
+version: '3.2'
+services:
+  mpd:
+    image: $MPD_IMAGE
+    container_name: mpd
+    build:
+        context: ./mpd
+    ports:
+      - '$MPD_PORT:$MPD_PORT_CONTAINER'
+      - '8000:8000'
+    volumes:
+      - ./mpd.conf:/etc/mpd.conf
+      - /media:/media
+      - mpd:/var/lib/mpd
+    devices:
+      - /dev/snd
+    restart: always
+
+  django:
+    image: $RR_IMAGE
+    container_name: radio_relay
+    build: 
+        context: ./nginx
+        args:
+         - USER_ID
+         - GROUP_ID
+         - SERVER_ADDR=$IP_ADDR
+         - SERVER_PORT=$WEB_PORT
+         - MPD_ADDR=mpd
+         - MPD_PORT=$MPD_PORT_CONTAINER
+         #- BUILD_NUMBER
+    depends_on:
+         - mpd
+    volumes:
+      - ./data/local_settings.py:/code/app/radio/local_settings.py
+      - ./data/db.sqlite3:/code/app/db.sqlite3
+      - ./radiko_rec:/media/radiko_rec
+      - mpd:/var/lib/mpd
+    ports:
+      - '$WEB_PORT:8080'
+    restart: always
+  
+volumes:
+  mpd:
+    driver: local

@@ -1,0 +1,3 @@
+mpd.conf
+data.*
+nginx/build_number
